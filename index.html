@@ -40,8 +40,8 @@ img.dr{height:1.15em;width:auto;vertical-align:-0.2em;display:inline-block;}
 .themes{display:grid;gap:14px;grid-template-columns:repeat(2,1fr);max-width:680px;width:100%;margin:0 auto;}
 .themeCard{border-radius:28px;padding:22px 16px;min-height:170px;color:#fff;font-size:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;box-shadow:0 8px 0 rgba(0,0,0,.25);}
 .themeCard .e{font-size:72px;line-height:1;}
-.avatar{width:120px;height:120px;border-radius:28px;object-fit:cover;box-shadow:0 4px 12px rgba(0,0,0,.35);border:3px solid rgba(255,255,255,.85);display:block;}
-.buddyHead .avatar{width:52px;height:52px;border-radius:16px;}
+.avatar{width:min(85%,230px);height:auto;aspect-ratio:1;border-radius:28px;object-fit:cover;box-shadow:0 4px 12px rgba(0,0,0,.35);border:3px solid rgba(255,255,255,.85);display:block;}
+.buddyHead .avatar{width:60px;height:60px;border-radius:16px;}
 .themeCard small{font-size:16px;opacity:.9;}
 .tc-dragon{background:linear-gradient(160deg,#12324a,#1f6f5c);}
 .tc-gato{background:linear-gradient(160deg,#5a1a2e,#b8473a);}
@@ -131,7 +131,11 @@ img.dr{height:1.15em;width:auto;vertical-align:-0.2em;display:inline-block;}
 .card.small{font-size:clamp(22px,5vw,40px);}
 .card .mini{display:flex;flex-wrap:wrap;justify-content:center;gap:2px;font-size:.5em;}
 img.pic{width:1em;height:1em;object-fit:contain;vertical-align:middle;border-radius:.12em;}
-.bigE img.pic{border-radius:18px;}
+.bigE img.pic{width:1.6em;height:1.6em;border-radius:18px;}
+.opt img.pic{width:min(80%,190px);height:auto;aspect-ratio:1;}
+.opt:has(img.pic){min-height:160px;}
+.card img.pic{width:88%;height:88%;}
+.card:not(.small) .mini{font-size:.55em;}
 /* Código de Juegos */
 #pin{position:fixed;inset:0;z-index:25;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:16px;}
 .pinBox{background:#fff;border-radius:28px;padding:22px;width:100%;max-width:360px;text-align:center;}
