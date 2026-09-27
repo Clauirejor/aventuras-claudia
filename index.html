@@ -37,7 +37,7 @@ img.dr{height:1.15em;width:auto;vertical-align:-0.2em;display:inline-block;}
 /* Tema */
 .pickTitle{color:#fff;text-align:center;font-size:clamp(26px,5vw,40px);margin:18px 0 6px;}
 .pickSub{color:#fff;opacity:.85;text-align:center;margin:0 0 18px;font-size:18px;}
-.themes{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));}
+.themes{display:grid;gap:14px;grid-template-columns:repeat(2,1fr);max-width:680px;width:100%;margin:0 auto;}
 .themeCard{border-radius:28px;padding:22px 16px;min-height:170px;color:#fff;font-size:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;box-shadow:0 8px 0 rgba(0,0,0,.25);}
 .themeCard .e{font-size:72px;line-height:1;}
 .avatar{width:120px;height:120px;border-radius:28px;object-fit:cover;box-shadow:0 4px 12px rgba(0,0,0,.35);border:3px solid rgba(255,255,255,.85);display:block;}
@@ -45,6 +45,8 @@ img.dr{height:1.15em;width:auto;vertical-align:-0.2em;display:inline-block;}
 .themeCard small{font-size:16px;opacity:.9;}
 .tc-dragon{background:linear-gradient(160deg,#12324a,#1f6f5c);}
 .tc-gato{background:linear-gradient(160deg,#5a1a2e,#b8473a);}
+.tc-juegos{background:linear-gradient(160deg,#0f5c8c,#2bb673);border:3px solid #ffd166;}
+.tc-juegos .e{font-size:72px;line-height:1;}
 .tc-retro{background:linear-gradient(160deg,#140a2e,#3a1466);border:3px solid #29e7ff;}
 
 /* Mapa */
@@ -359,7 +361,8 @@ function buddy(show,jump){const b=$('#buddy');b.textContent=buddyEmoji();b.class
 function showThemes(){
   stopAll();buddy(false);
   app.innerHTML=(S.theme?'<div class="topbar"><button class="backBtn" data-a="map">⬅️ Atrás</button></div>':'')+'<h1 class="pickTitle">¿Con quién juegas hoy?</h1><p class="pickSub">Toca tu aventura</p><div class="themes">'+
-    Object.entries(THEMES).map(([k,t])=>'<button class="themeCard tc-'+k+'" data-a="pickTheme" data-v="'+k+'">'+buddyHTML(k)+t.name+'<small>'+t.sub+'</small></button>').join('')+'</div>';
+    Object.entries(THEMES).map(([k,t])=>'<button class="themeCard tc-'+k+'" data-a="pickTheme" data-v="'+k+'">'+buddyHTML(k)+t.name+'<small>'+t.sub+'</small></button>').join('')+
+    '<button class="themeCard tc-juegos" data-a="games"><span class="e">🎮</span>Juegos<small>Parejas y más juegos</small></button></div>';
 }
 
 function showMap(){
@@ -490,7 +493,7 @@ function pairCards(id,n){
 let PG=null;
 function showGames(){
   stopAll();G=null;PG=null;buddy(false);
-  let h='<div class="topbar"><button class="backBtn" data-a="map">⬅️ Atrás</button><div style="flex:1"></div></div>';
+  let h='<div class="topbar"><button class="backBtn" data-a="themes">⬅️ Atrás</button><div style="flex:1"></div></div>';
   h+='<div class="gameHead">🃏 Parejas</div><div class="lvls">'+PAIR_MODES.map(m=>{const st=S.stars['pairs_'+m.id]||0;
     return '<button class="lvl'+(st?' done':'')+'" data-a="pairs" data-v="'+m.id+'"><span class="e">'+m.ic+'</span>'+m.t+'<span class="st">'+(st?'⭐'.repeat(st):'')+'</span></button>';}).join('')+'</div>';
   h+='<div class="gameHead soon">🔜 Muy pronto</div><div class="lvls soon">'+[['🎵','Simón de sonidos'],['🎈','Explota globos'],['🐹','Topo saltarín'],['🧱','Construye la palabra'],['🛒','La tienda']]
@@ -608,7 +611,7 @@ new MutationObserver(ms=>ms.forEach(m=>{m.addedNodes.forEach(n=>{if(n.nodeType==
   .observe(document.body,{childList:true,subtree:true,characterData:true});
 
 /* ============ Arranque ============ */
-if(S.theme){document.body.dataset.theme=S.theme;decor();makeIcon();showMap();}else{decor();makeIcon();showThemes();}
+if(S.theme)document.body.dataset.theme=S.theme;decor();makeIcon();showThemes();
 </script>
 </body>
 </html>
