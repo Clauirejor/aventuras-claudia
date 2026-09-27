@@ -114,6 +114,22 @@ img.dr{height:1.15em;width:auto;vertical-align:-0.2em;display:inline-block;}
 .burst{position:fixed;pointer-events:none;font-size:42px;z-index:9;animation:fly 1s ease-out forwards;}
 @keyframes fly{to{transform:translate(var(--dx),var(--dy)) scale(1.4);opacity:0;}}
 
+/* Pestañas y juegos */
+.tabbar{position:sticky;bottom:0;z-index:6;display:flex;gap:10px;padding:12px 0 calc(8px + env(safe-area-inset-bottom));margin-top:auto;background:linear-gradient(transparent,var(--bg2) 35%);}
+.tab{flex:1;height:66px;border-radius:22px;font-size:24px;background:rgba(255,255,255,.22);color:#fff;box-shadow:0 5px 0 rgba(0,0,0,.2);}
+.tab.on{background:var(--card);color:var(--ink);}
+.gameHead{color:#fff;font-size:26px;margin:14px 4px 10px;display:flex;align-items:center;gap:8px;}
+.soon{opacity:.55;}
+.cards{display:grid;gap:12px;grid-template-columns:repeat(var(--cols),1fr);max-width:720px;width:100%;margin:0 auto;}
+.card{aspect-ratio:3/4;border-radius:22px;font-size:clamp(30px,7.5vw,60px);box-shadow:0 6px 0 rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;padding:6px;line-height:1.05;text-align:center;
+  background:linear-gradient(160deg,var(--acc),var(--acc2));color:#fff;transition:transform .25s;}
+.card .back{font-size:.9em;opacity:.9;}
+.card.open,.card.done{background:var(--card);color:var(--ink);transform:rotateY(0) scale(1.03);}
+.card.done{background:#c9f2dc;box-shadow:0 2px 0 rgba(0,0,0,.15);}
+.card.small{font-size:clamp(22px,5vw,40px);}
+.card .mini{display:flex;flex-wrap:wrap;justify-content:center;gap:2px;font-size:.5em;}
+img.pic{width:1em;height:1em;object-fit:contain;vertical-align:middle;border-radius:.12em;}
+.bigE img.pic{border-radius:18px;}
 /* Adultos */
 #adult{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:20;display:flex;align-items:center;justify-content:center;padding:16px;}
 .panel{background:#fff;border-radius:24px;padding:22px;max-width:480px;width:100%;max-height:90vh;overflow:auto;}
@@ -301,15 +317,15 @@ const GEN={
     options:shuffle([L,...sample(pool.filter(x=>x!==L),2)]).map(x=>({html:letterHTML(x,m),v:x})),answer:L,after:LNAME[L].split(',')[0]};},
   empieza(p,m){const pool=WORDS.faciles.filter(w=>LNAME[w[0][0].toUpperCase()]);const [w,e]=pick(pool);const L=w[0].toUpperCase();
     const others=sample(Object.keys(LNAME).filter(x=>x!==L),2);
-    return{prompt:'¿Con qué letra empieza?',speak:'¿Con qué letra empieza?|'+w,visual:'<div class="bigE">'+e+'</div>',options:shuffle([L,...others]).map(x=>({html:letterHTML(x,m),v:x})),answer:L,after:w+'|empieza por|'+LNAME[L].split(',')[0]};},
+    return{prompt:'¿Con qué letra empieza?',speak:'¿Con qué letra empieza?|'+w,visual:'<div class="bigE">'+pic(w,e)+'</div>',options:shuffle([L,...others]).map(x=>({html:letterHTML(x,m),v:x})),answer:L,after:w+'|empieza por|'+LNAME[L].split(',')[0]};},
   contar(max){const n=rand(1,max);return{prompt:'¿Cuántos hay?',speak:'¿Cuántos hay? Cuéntalos',visual:itemsHTML(n,T().item),options:numOpts(n,1,max),answer:String(n),after:'Hay|'+n};},
   numeroDicho(){const n=rand(1,20);const ex=[];if(n>9)ex.push(n-10);if(n<11)ex.push(n+10);if(n>9&&n%10!==0){const r=+String(n).split('').reverse().join('');if(r<=20&&r!==n)ex.push(r);}
     const o=numOpts(n,1,20,ex);return{prompt:'Busca el número',speak:'Busca el número|'+n,visual:'<div class="bigE">👂</div>',options:o,answer:String(n),after:String(n)};},
-  oirPalabra(){const set=sample(WORDS.faciles,3),[w]=set[0];return{prompt:'¿Qué es?',speak:'Busca|'+w,visual:'<div class="bigE">👂</div>',options:shuffle(set.map(([x,e])=>({html:e,v:x}))),answer:w,after:w};},
-  leerPalabra(p,m){const set=sample(WORDS[p],3),[w,e]=set[0];return{prompt:'¿Qué palabra es?',speak:'¿Qué palabra es?',visual:'<div class="bigE">'+e+'</div>',wordy:true,options:shuffle(set.map(([x])=>({html:txt(x,m),v:x}))),answer:w,after:w};},
-  leerFrase(p,m){const set=sample(FRASES,3),[e,f]=set[0];return{prompt:'¿Qué frase va con el dibujo?',speak:'¿Qué frase va con el dibujo?',visual:'<div class="bigE">'+e+'</div>',wordy:true,options:shuffle(set.map(([,x])=>({html:txt(x,m),v:x}))),answer:f,after:f};},
+  oirPalabra(){const set=sample(WORDS.faciles,3),[w]=set[0];return{prompt:'¿Qué es?',speak:'Busca|'+w,visual:'<div class="bigE">👂</div>',options:shuffle(set.map(([x,e])=>({html:pic(x,e),v:x}))),answer:w,after:w};},
+  leerPalabra(p,m){const set=sample(WORDS[p],3),[w,e]=set[0];return{prompt:'¿Qué palabra es?',speak:'¿Qué palabra es?',visual:'<div class="bigE">'+pic(w,e)+'</div>',wordy:true,options:shuffle(set.map(([x])=>({html:txt(x,m),v:x}))),answer:w,after:w};},
+  leerFrase(p,m){const set=sample(FRASES,3),[e,f]=set[0];return{prompt:'¿Qué frase va con el dibujo?',speak:'¿Qué frase va con el dibujo?',visual:'<div class="bigE">'+pic(f,e)+'</div>',wordy:true,options:shuffle(set.map(([,x])=>({html:txt(x,m),v:x}))),answer:f,after:f};},
   completar(p,m){const c=pick(COMPLETAR);const s=c.s.replace('___','<span class="blank"></span>');return{prompt:'Completa la frase',speak:c.s.replace('___','…'),
-    visual:'<div><div class="bigE" style="font-size:80px">'+c.e+'</div><div class="sent">'+txt(c.s,m).replace('___','<span class="blank"></span>')+'</div></div>',wordy:true,
+    visual:'<div><div class="bigE" style="font-size:80px">'+pic(c.s.replace('___',c.a),c.e)+'</div><div class="sent">'+txt(c.s,m).replace('___','<span class="blank"></span>')+'</div></div>',wordy:true,
     options:shuffle([c.a,...c.o]).map(x=>({html:txt(x,m),v:x})),answer:c.a,after:c.s.replace('___',c.a)};},
   pareja(){const set=sample(PAREJAS,3),[a,b]=set[0];return{prompt:'¿Qué va con…?',speak:'¿Qué va con esto?',visual:'<div class="bigE">'+a+'</div>',options:shuffle(set.map(p=>({html:p[1],v:p[1]}))),answer:b};},
   intruso(){const fams=Object.keys(FAMILIAS),[f1,f2]=sample(fams,2);const three=sample(FAMILIAS[f1],3),odd=pick(FAMILIAS[f2]);
@@ -326,6 +342,11 @@ const GEN={
     const opts=shuffle([r,...sample([...new Set([r+n,r-n,r+1,r-1].filter(x=>x>0&&x!==r))],2)]).map(x=>({html:String(x),v:String(x)}));
     return{prompt:k+' × '+n+' = ?',speak:k+'|por|'+n,visual:v,options:opts,answer:String(r),after:k+'|por|'+n+'|son|'+r};}
 };
+
+/* ============ Imágenes propias: img/<nombre>.png o .jpg; si no existe, emoji ============ */
+const noImg=new Set();
+function pic(word,e){const s=slug(word);if(noImg.has(s))return e;return '<img class="pic" src="img/'+s+'.png" data-s="'+s+'" data-e="'+e+'" alt="" onerror="imgFail(this)">';}
+function imgFail(el){if(!el.dataset.j){el.dataset.j='1';el.src='img/'+el.dataset.s+'.jpg';return;}noImg.add(el.dataset.s);el.replaceWith(document.createTextNode(el.dataset.e));}
 
 /* ============ Pantallas ============ */
 const app=$('#app');
@@ -348,7 +369,7 @@ function showMap(){
   WORLDS.forEach((w,wi)=>{const open=worldOpen(wi);
     h+='<section class="world'+(open?'':' locked')+'"><h2>'+(open?'🗺️':'🔒')+' '+(wi+1)+'. '+T().worlds[wi]+'</h2><div class="lvls">'+
       w.map(l=>{const st=S.stars[l.id]||0;return '<button class="lvl'+(st?' done':'')+'" data-a="play" data-v="'+l.id+'"'+(open?'':' disabled')+'><span class="e">'+UICON[l.u]+'</span>'+l.t+'<span class="st">'+(st?'⭐'.repeat(st):'')+'</span></button>';}).join('')+'</div></section>';});
-  app.innerHTML=h;
+  app.innerHTML=h+tabbar('map');
   holdGear();
   const firstOpen=WORLDS.findIndex((w,wi)=>worldOpen(wi)&&w.some(l=>!S.stars[l.id]));
   if(firstOpen>0){const secs=app.querySelectorAll('.world');secs[firstOpen].scrollIntoView({block:'start'});}
@@ -393,7 +414,7 @@ function showModel(){
   if(!G)return;if(G.i>=G.n)return finish();
   const it=G.items[G.i],isP=G.L.k==='praxia';
   const big=isP?'<div class="bigE">'+it.e+'</div><div class="mText">'+it.t+'</div>':
-    (it.e?'<div class="bigE" style="font-size:80px">'+it.e+'</div>':'')+'<div class="mText" style="font-size:clamp(56px,13vw,110px)">'+txt(it.b,G.L.m)+'</div>';
+    (it.e?'<div class="bigE" style="font-size:80px">'+pic(it.b,it.e)+'</div>':'')+'<div class="mText" style="font-size:clamp(56px,13vw,110px)">'+txt(it.b,G.L.m)+'</div>';
   const tip=it.tip?'<div class="mTip">'+it.tip+'</div>':'';
   app.innerHTML='<div class="topbar"><button class="backBtn" data-a="map">⬅️ Atrás</button>'+dotsHTML()+'<button class="iconBtn" data-a="mirror">🪞</button></div>'+
     '<div class="prompt">'+(isP?buddyEmoji()+' ¡Hazlo como yo!':'Escucha y dilo tú')+'</div>'+
@@ -440,6 +461,79 @@ function burst(el){if(!el)return;const r=el.getBoundingClientRect();for(let i=0;
   s.style.left=(r.left+r.width/2-20)+'px';s.style.top=(r.top+r.height/2-20)+'px';s.style.setProperty('--dx',rand(-160,160)+'px');s.style.setProperty('--dy',rand(-200,-40)+'px');
   document.body.appendChild(s);setTimeout(()=>s.remove(),1000);}}
 
+/* ============ JUEGOS ============ */
+const tabbar=on=>'<div class="tabbar"><button class="tab'+(on==='map'?' on':'')+'" data-a="map">🗺️ Aventura</button><button class="tab'+(on==='games'?' on':'')+'" data-a="games">🎮 Juegos</button></div>';
+const LSHORT=L=>LNAME[L].split(',')[0];
+const PAIR_MODES=[
+  {id:'iguales3',t:'Dibujos iguales',ic:'🖼️',n:3},
+  {id:'iguales4',t:'Más dibujos iguales',ic:'🖼️',n:4},
+  {id:'letraDibujo',t:'LETRA ↔ DIBUJO',ic:'🔤',n:3},
+  {id:'numCantidad',t:'NÚMERO ↔ CANTIDAD',ic:'🔢',n:4},
+  {id:'palabraDibujo',t:'PALABRA ↔ DIBUJO',ic:'📖',n:4},
+  {id:'mayLig',t:'MAYÚSCULA ↔ ligada',ic:'✍️',n:4},
+  {id:'sumaRes',t:'SUMA ↔ RESULTADO',ic:'➕',n:4},
+  {id:'ligDibujo',t:'palabra ligada ↔ dibujo',ic:'✍️',n:5}
+];
+function pairCards(id,n){
+  const P=[];
+  if(id==='iguales3'||id==='iguales4'){sample(WORDS.faciles,n).forEach(([w,e])=>{P.push([{h:pic(w,e),s:w},{h:pic(w,e),s:w}]);});}
+  if(id==='letraDibujo'){const seen=new Set();shuffle(WORDS.faciles.filter(w=>LNAME[w[0][0].toUpperCase()])).forEach(([w,e])=>{const L=w[0].toUpperCase();if(seen.has(L)||seen.size>=n)return;seen.add(L);
+    P.push([{h:letterHTML(L,'up'),s:LSHORT(L)},{h:pic(w,e),s:w}]);});}
+  if(id==='numCantidad'){sample([1,2,3,4,5,6],n).forEach(k=>P.push([{h:String(k),s:String(k)},{h:'<div class="mini">'+(T().item+' ').repeat(k)+'</div>',s:String(k)}]));}
+  if(id==='palabraDibujo'){sample(WORDS.faciles,n).forEach(([w,e])=>P.push([{h:txt(w,'up'),s:w,sm:1},{h:pic(w,e),s:w}]));}
+  if(id==='ligDibujo'){sample(WORDS.faciles,n).forEach(([w,e])=>P.push([{h:txt(w,'cur'),s:w,sm:1},{h:pic(w,e),s:w}]));}
+  if(id==='mayLig'){sample([...LETTERS.vocales,...LETTERS.cons1],n).forEach(L=>P.push([{h:letterHTML(L,'up'),s:LSHORT(L)},{h:letterHTML(L,'cur'),s:LSHORT(L)}]));}
+  if(id==='sumaRes'){const used=new Set();while(P.length<n){const a=rand(1,5),b=rand(1,5),r=a+b;if(used.has(r))continue;used.add(r);
+    P.push([{h:a+'+'+b,s:a+'|más|'+b,sm:1},{h:String(r),s:String(r)}]);}}
+  const cards=[];P.forEach((p,k)=>p.forEach(c=>cards.push(Object.assign({k},c))));return shuffle(cards);
+}
+let PG=null;
+function showGames(){
+  stopAll();G=null;PG=null;buddy(false);
+  let h='<div class="topbar"><button class="backBtn" data-a="map">⬅️ Atrás</button><div style="flex:1"></div></div>';
+  h+='<div class="gameHead">🃏 Parejas</div><div class="lvls">'+PAIR_MODES.map(m=>{const st=S.stars['pairs_'+m.id]||0;
+    return '<button class="lvl'+(st?' done':'')+'" data-a="pairs" data-v="'+m.id+'"><span class="e">'+m.ic+'</span>'+m.t+'<span class="st">'+(st?'⭐'.repeat(st):'')+'</span></button>';}).join('')+'</div>';
+  h+='<div class="gameHead soon">🔜 Muy pronto</div><div class="lvls soon">'+[['🎵','Simón de sonidos'],['🎈','Explota globos'],['🐹','Topo saltarín'],['🧱','Construye la palabra'],['🛒','La tienda']]
+    .map(([e,t])=>'<button class="lvl" disabled><span class="e">'+e+'</span>'+t+'</button>').join('')+'</div>';
+  app.innerHTML=h+tabbar('games');
+}
+function startPairs(id){
+  stopAll();const m=PAIR_MODES.find(x=>x.id===id);
+  PG={m,cards:pairCards(id,m.n),open:[],lock:false,tries:0,found:0};
+  const cols=PG.cards.length<=6?3:4;
+  app.innerHTML='<div class="topbar"><button class="backBtn" data-a="games">⬅️ Atrás</button><div class="dots" id="pdots"></div><button class="iconBtn" data-a="pairs" data-v="'+id+'">🔄</button></div>'+
+    '<div class="prompt">Busca las parejas</div><div class="cards" style="--cols:'+cols+'">'+
+    PG.cards.map((c,i)=>'<button class="card'+(c.sm?' small':'')+'" data-a="card" data-v="'+i+'"><span class="back">'+buddyEmoji()+'</span></button>').join('')+'</div>';
+  pairDots();buddy(true);setTimeout(()=>say('Busca las parejas'),250);
+}
+function pairDots(){const d=$('#pdots');if(d)d.innerHTML=Array.from({length:PG.m.n},(_,i)=>'<i class="'+(i<PG.found?'on':'')+'"></i>').join('');}
+function flipCard(btn){
+  if(!PG||PG.lock)return;const i=+btn.dataset.v,c=PG.cards[i];
+  if(c.done||PG.open.includes(i))return;
+  btn.classList.add('open');btn.innerHTML=c.h;sfx.tap();PG.open.push(i);
+  if(PG.open.length<2){say(c.s);return;}
+  PG.tries++;const [a,b]=PG.open,ca=PG.cards[a],cb=PG.cards[b];
+  const btns=app.querySelectorAll('.card');
+  if(ca.k===cb.k){
+    ca.done=cb.done=true;PG.open=[];PG.found++;
+    setTimeout(()=>{sfx.ok();btns[a].classList.add('done');btns[b].classList.add('done');burst(btns[b]);buddy(true,true);pairDots();},350);
+    say(c.s+'|¡Pareja!');
+    if(PG.found===PG.m.n){const pg=PG;setTimeout(()=>{if(PG===pg)pairsEnd();},2200);}
+  }else{
+    PG.lock=true;say(c.s);const pg=PG;
+    setTimeout(()=>{if(PG!==pg)return;[a,b].forEach(x=>{btns[x].classList.remove('open');btns[x].innerHTML='<span class="back">'+buddyEmoji()+'</span>';});PG.open=[];PG.lock=false;},1500);
+  }
+}
+function pairsEnd(){
+  const n=PG.m.n,stars=PG.tries<=n+1?3:PG.tries<=n*2?2:1,id=PG.m.id;
+  S.stars['pairs_'+id]=Math.max(S.stars['pairs_'+id]||0,stars);save();
+  sfx.win();buddy(true,true);const msg=pick(T().cheer);
+  app.innerHTML='<div class="topbar"><button class="backBtn" data-a="games">⬅️ Atrás</button></div><div class="endCard"><div class="bigE">'+buddyEmoji()+T().reward+'</div><div class="endStars">'+'⭐'.repeat(stars)+'</div><h2>¡Todas las parejas! '+msg+'</h2>'+
+    '<div class="row" style="margin-top:18px"><button class="btn acc" data-a="pairs" data-v="'+id+'">🔁 Otra vez</button><button class="btn" data-a="games">🎮 Juegos</button></div></div>';
+  say('¡Todas las parejas!|'+msg);
+  for(let i=0;i<8;i++)setTimeout(()=>burst(app.querySelector('.endStars')),i*120);
+}
+
 /* --- Zona de adultos (mantener pulsado ⚙️ 2 segundos) --- */
 function holdGear(){
   const g=$('#gear');if(!g)return;let t;
@@ -468,11 +562,11 @@ function showAdult(){
 /* --- Eventos --- */
 app.addEventListener('click',e=>{
   const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a;
-  if(a!=='opt'&&a!=='replay')sfx.tap();
+  if(a!=='opt'&&a!=='replay'&&a!=='card')sfx.tap();
   if(a==='pickTheme'){setTheme(b.dataset.v);say(T().intro);showMap();}
   else if(a==='themes')showThemes();
   else if(a==='play')startLevel(b.dataset.v);
-  else if(a==='map'){G=null;showMap();}
+  else if(a==='map'){G=null;PG=null;showMap();}
   else if(a==='opt')answer(b);
   else if(a==='replay')replay();
   else if(a==='go')runTimer();
@@ -480,6 +574,9 @@ app.addEventListener('click',e=>{
   else if(a==='skip')modelDone(true);
   else if(a==='mirror')toggleMirror();
   else if(a==='again')startLevel(G.L.id);
+  else if(a==='games')showGames();
+  else if(a==='pairs')startPairs(b.dataset.v);
+  else if(a==='card')flipCard(b);
 });
 
 /* ============ PWA: icono y manifest generados ============ */
