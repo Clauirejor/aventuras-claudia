@@ -132,6 +132,17 @@ img.dr{height:1.15em;width:auto;vertical-align:-0.2em;display:inline-block;}
 .card .mini{display:flex;flex-wrap:wrap;justify-content:center;gap:2px;font-size:.5em;}
 img.pic{width:1em;height:1em;object-fit:contain;vertical-align:middle;border-radius:.12em;}
 .bigE img.pic{border-radius:18px;}
+/* Código de Juegos */
+#pin{position:fixed;inset:0;z-index:25;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:16px;}
+.pinBox{background:#fff;border-radius:28px;padding:22px;width:100%;max-width:360px;text-align:center;}
+.pinBox h3{margin:0 0 12px;font-size:24px;}
+.pinDots{display:flex;gap:14px;justify-content:center;margin:6px 0 16px;}
+.pinDots i{width:22px;height:22px;border-radius:50%;border:3px solid #999;}
+.pinDots i.f{background:#333;border-color:#333;}
+.pinDots.err{animation:shake .4s;}
+.pinKeys{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.pinKeys button{height:68px;border-radius:18px;font-size:30px;background:#f1eee8;box-shadow:0 4px 0 rgba(0,0,0,.15);}
+.pinKeys button:active{transform:translateY(3px);box-shadow:none;}
 /* Adultos */
 #adult{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:20;display:flex;align-items:center;justify-content:center;padding:16px;}
 .panel{background:#fff;border-radius:24px;padding:22px;max-width:480px;width:100%;max-height:90vh;overflow:auto;}
@@ -465,6 +476,23 @@ function burst(el){if(!el)return;const r=el.getBoundingClientRect();for(let i=0;
   document.body.appendChild(s);setTimeout(()=>s.remove(),1000);}}
 
 /* ============ JUEGOS ============ */
+const GAMES_PIN='1234';let gamesOk=false;
+function askGames(){
+  if(gamesOk)return showGames();
+  let code='';const d=document.createElement('div');d.id='pin';
+  const draw=()=>{d.querySelector('.pinDots').innerHTML=[0,1,2,3].map(i=>'<i class="'+(i<code.length?'f':'')+'"></i>').join('');};
+  d.innerHTML='<div class="pinBox"><h3>🔒 Código de Juegos</h3><div class="pinDots"></div><div class="pinKeys">'+
+    ['1','2','3','4','5','6','7','8','9','✕','0','⌫'].map(k=>'<button data-k="'+k+'">'+k+'</button>').join('')+'</div></div>';
+  document.body.appendChild(d);draw();
+  d.onclick=e=>{const b=e.target.closest('[data-k]');if(!b){if(e.target===d)d.remove();return;}const k=b.dataset.k;sfx.tap();
+    if(k==='✕'){d.remove();return;}
+    if(k==='⌫'){code=code.slice(0,-1);draw();return;}
+    if(code.length<4){code+=k;draw();}
+    if(code.length===4){
+      if(code===GAMES_PIN){gamesOk=true;setTimeout(()=>{d.remove();showGames();},150);}
+      else{sfx.no();const dots=d.querySelector('.pinDots');dots.classList.add('err');setTimeout(()=>{code='';dots.classList.remove('err');draw();},450);}
+    }};
+}
 const tabbar=on=>'<div class="tabbar"><button class="tab'+(on==='map'?' on':'')+'" data-a="map">🗺️ Aventura</button><button class="tab'+(on==='games'?' on':'')+'" data-a="games">🎮 Juegos</button></div>';
 const LSHORT=L=>LNAME[L].split(',')[0];
 const PAIR_MODES=[
@@ -567,9 +595,9 @@ app.addEventListener('click',e=>{
   const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a;
   if(a!=='opt'&&a!=='replay'&&a!=='card')sfx.tap();
   if(a==='pickTheme'){setTheme(b.dataset.v);say(T().intro);showMap();}
-  else if(a==='themes')showThemes();
+  else if(a==='themes'){gamesOk=false;showThemes();}
   else if(a==='play')startLevel(b.dataset.v);
-  else if(a==='map'){G=null;PG=null;showMap();}
+  else if(a==='map'){G=null;PG=null;gamesOk=false;showMap();}
   else if(a==='opt')answer(b);
   else if(a==='replay')replay();
   else if(a==='go')runTimer();
@@ -577,7 +605,7 @@ app.addEventListener('click',e=>{
   else if(a==='skip')modelDone(true);
   else if(a==='mirror')toggleMirror();
   else if(a==='again')startLevel(G.L.id);
-  else if(a==='games')showGames();
+  else if(a==='games')askGames();
   else if(a==='pairs')startPairs(b.dataset.v);
   else if(a==='card')flipCard(b);
 });
