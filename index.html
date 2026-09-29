@@ -140,7 +140,7 @@ img.pic{width:1em;height:1em;object-fit:contain;vertical-align:middle;border-rad
 .card img.pic{width:88%;height:88%;}
 .card:not(.small) .mini{font-size:.55em;}
 /* Código de Juegos */
-#pin{position:fixed;inset:0;z-index:25;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:16px;}
+#pin{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:16px;}
 .pinBox{background:#fff;border-radius:28px;padding:22px;width:100%;max-width:360px;text-align:center;}
 .pinBox h3{margin:0 0 12px;font-size:24px;}
 .pinDots{display:flex;gap:14px;justify-content:center;margin:6px 0 16px;}
@@ -238,6 +238,21 @@ img.pic{width:1em;height:1em;object-fit:contain;vertical-align:middle;border-rad
 .tc-write{background:linear-gradient(160deg,#ff8a3d,#ff6fa8);border:3px solid #fff;grid-column:1/-1;min-height:140px;font-size:30px;}
 .tc-write .e{font-size:64px;line-height:1;}
 /* Adultos */
+.gearBtn{background:rgba(255,255,255,.25);}
+.settings h4{margin:18px 0 6px;font-size:19px;border-top:2px solid #f1eee8;padding-top:12px;}
+.settings p{font-size:14px;opacity:.75;margin:4px 0 8px;}
+.srow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:8px 0;flex-wrap:wrap;}
+.srow>div:first-child{flex:1;min-width:150px;}
+.srow small{display:block;font-size:13px;opacity:.65;font-weight:400;}
+.seg{display:inline-flex;flex-wrap:wrap;border-radius:14px;overflow:hidden;border:2px solid #e3ded4;background:#f6f3ec;}
+.seg button{padding:8px 11px;font-size:15px;font-weight:700;background:none;color:#555;min-width:38px;}
+.seg button.on{background:#ff8a3d;color:#fff;}
+.code{font-family:monospace;background:#f1eee8;padding:2px 8px;border-radius:8px;letter-spacing:3px;}
+.mprev{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px;}
+.mprev button{font-size:24px;width:48px;height:44px;border-radius:12px;background:#f1eee8;}
+#rest{position:fixed;inset:0;z-index:60;background:linear-gradient(160deg,#2b2d6e,#6a3d9a);display:flex;align-items:center;justify-content:center;padding:20px;color:#fff;text-align:center;}
+.restBox{max-width:460px;}.restBox h2{font-size:34px;margin:10px 0;}.restBox p{font-size:20px;opacity:.9;}
+.restBox .btn{margin-top:26px;font-size:17px;opacity:.85;}
 #adult{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:20;display:flex;align-items:center;justify-content:center;padding:16px;}
 .panel{background:#fff;border-radius:24px;padding:22px;max-width:480px;width:100%;max-height:90vh;overflow:auto;}
 .panel h3{margin:0 0 12px;font-size:24px;}
@@ -272,6 +287,7 @@ const letterHTML=(L,m)=>m==='up'?'<span class="up">'+L+'</span>':cur(L.toLowerCa
 const KEY='claudia_aventuras_v1';
 let S=Object.assign({theme:null,stars:{},all:false,rate:0.85,rounds:6},(()=>{try{return JSON.parse(localStorage.getItem(KEY))||{}}catch(e){return{}}})());
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+S.cfg=Object.assign({pin:'1234',pinGames:true,music:true,musicVol:.6,sfx:true,wopen:{},wsec:{},wAll:false,w3d:-1,limit:0},S.cfg||{});
 
 /* ============ Voz ============ */
 let voice=null;
@@ -315,6 +331,7 @@ document.addEventListener('pointerdown',function unlock(){
 /* ============ Sonidos ============ */
 let AC;
 function tone(fs,dur=.14,type='sine',gap=.09,vol=.22){
+  if(S.cfg&&S.cfg.sfx===false)return;
   try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();
     const t=AC.currentTime;fs.forEach((f,i)=>{const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.value=f;
       const s=t+i*gap;g.gain.setValueAtTime(.0001,s);g.gain.exponentialRampToValueAtTime(vol,s+.02);g.gain.exponentialRampToValueAtTime(.0001,s+dur);
@@ -411,7 +428,7 @@ const WORLDS=[
   [{u:'sonidos',k:'modelo',p:'frases',m:'cur',t:'Digo frases'},{u:'letras',k:'empieza',m:'cur',t:'¿Con qué letra empieza? (ligada)'},{u:'frases',k:'completar',m:'cur',t:'Completa la frase'},{u:'restas',k:'resta',p:{max:10,vis:false},t:'Restas sin dibujos'},{u:'tablas',k:'tabla',p:[10],t:'Tabla del 10'},{u:'tablas',k:'tabla',p:[3],t:'Tabla del 3'},{u:'tablas',k:'tabla',p:[4],t:'Tabla del 4'},{u:'tablas',k:'tabla',p:[2,3,4,5,10],t:'Mezcla de tablas'}]
 ];
 WORLDS.forEach((w,wi)=>w.forEach(l=>{l.id=(l.k+'-'+JSON.stringify(l.p||'')+'-'+(l.m||'')).replace(/[^a-z0-9]+/gi,'_');l.w=wi;}));
-const worldOpen=wi=>S.all||wi===0||WORLDS[wi-1].every(l=>S.stars[l.id]);
+const worldOpen=wi=>{const o=S.cfg.wopen[wi];if(o==='closed')return false;if(o==='open')return true;return S.all||wi===0||WORLDS[wi-1].every(l=>S.stars[l.id]);};
 
 /* ============ Generadores de preguntas ============ */
 function numOpts(ans,min,max,extra=[]){
@@ -489,6 +506,111 @@ function logAnswer(title,gen,ans,ok,firstTry){const d=dayRec();const e=d.ex[titl
   if(gen&&ans!=null){const m=LOG.miss[gen]=LOG.miss[gen]||{};if(!ok)m[ans]=Math.min(9,(m[ans]||0)+2);else if(firstTry&&m[ans]){m[ans]--;if(m[ans]<=0)delete m[ans];}}
   saveLog();}
 setInterval(()=>{if(document.visibilityState==='visible'){dayRec().secs+=15;saveLog();}},15000);
+
+/* ============ CÓDIGO DE ADULTO ============ */
+function askPin(title,ok,opt){opt=opt||{};let code='';const d=document.createElement('div');d.id='pin';
+  const draw=()=>{d.querySelector('.pinDots').innerHTML=[0,1,2,3].map(i=>'<i class="'+(i<code.length?'f':'')+'"></i>').join('');};
+  d.innerHTML='<div class="pinBox"><h3>'+title+'</h3>'+(opt.sub?'<p style="margin:-4px 0 10px;opacity:.7">'+opt.sub+'</p>':'')+'<div class="pinDots"></div><div class="pinKeys">'+
+    ['1','2','3','4','5','6','7','8','9','✕','0','⌫'].map(k=>'<button data-k="'+k+'">'+k+'</button>').join('')+'</div></div>';
+  document.body.appendChild(d);draw();
+  d.onclick=e=>{const b=e.target.closest('[data-k]');if(!b){if(e.target===d&&!opt.stay)d.remove();return;}const k=b.dataset.k;sfx.tap();
+    if(k==='✕'){if(!opt.stay)d.remove();return;}
+    if(k==='⌫'){code=code.slice(0,-1);draw();return;}
+    if(code.length<4){code+=k;draw();}
+    if(code.length===4){
+      if(opt.raw||code===S.cfg.pin){const c=code;setTimeout(()=>{d.remove();ok(c);},150);}
+      else{sfx.no();const dots=d.querySelector('.pinDots');dots.classList.add('err');setTimeout(()=>{code='';dots.classList.remove('err');draw();},450);}
+    }};
+}
+
+/* ============ MÚSICA DE FONDO (se genera sola; o pon tus propias canciones en musica/<nombre>.m4a) ============ */
+const MUSIC=(()=>{
+  const MAJ=[0,2,4,5,7,9,11],MIN=[0,2,3,5,7,8,10];
+  const ST={
+    menu:    {bpm:96, key:60,sc:MAJ,prog:[0,4,5,3],lead:'triangle',oct:12,dens:.55,bass:'half',  dr:'soft',    pad:1,seed:3, v:1},
+    aventura:{bpm:104,key:62,sc:MAJ,prog:[0,5,3,4],lead:'square',  oct:12,dens:.6, bass:'eighth',dr:'pop',     pad:1,seed:7, v:.75},
+    bosque:  {bpm:86, key:55,sc:MAJ,prog:[0,3,4,0],lead:'triangle',oct:24,dens:.45,bass:'half',  dr:'none',    pad:1,seed:11,v:1},
+    reves:   {bpm:84, key:57,sc:MIN,prog:[0,5,2,6],lead:'sawtooth',oct:12,arp:1,   bass:'eighth',dr:'none',    pad:1,seed:5, v:.7,lp:1300},
+    kart:    {bpm:144,key:64,sc:MAJ,prog:[0,5,3,4],lead:'square',  oct:12,dens:.7, bass:'eighth',dr:'kart',    pad:0,seed:13,v:.7},
+    mar:     {bpm:72, key:65,sc:MAJ,prog:[0,3,0,4],lead:'sine',    oct:12,dens:.35,bass:'half',  dr:'none',    pad:1,seed:17,v:1},
+    atrio:   {bpm:90, key:58,sc:MAJ,prog:[1,4,0,5],lead:'sine',    oct:12,dens:.5, bass:'walk',  dr:'soft',    pad:1,seed:19,v:1},
+    pizza:   {bpm:124,key:60,sc:MAJ,prog:[0,3,4,0],lead:'triangle',oct:12,dens:.65,bass:'oom',   dr:'none',    pad:0,seed:23,v:1},
+    disco:   {bpm:118,key:57,sc:MIN,prog:[0,5,6,4],lead:'square',  oct:12,arp:1,   bass:'octave',dr:'disco',   pad:1,seed:29,v:.7,lp:2600},
+    lego:    {bpm:110,key:67,sc:MAJ,prog:[0,4,5,3],lead:'square',  oct:12,dens:.6, bass:'half',  dr:'pop',     pad:0,seed:31,v:.7},
+    dulces:  {bpm:100,key:64,sc:MAJ,prog:[0,3,4,4],lead:'triangle',oct:24,dens:.6, bass:'half',  dr:'none',    pad:0,seed:37,v:1},
+    calma:   {bpm:66, key:65,sc:MAJ,prog:[0,3,5,4],lead:'sine',    oct:24,dens:.4, bass:'half',  dr:'none',    pad:1,seed:41,v:1},
+    tropical:{bpm:104,key:60,sc:MAJ,prog:[0,3,4,3],lead:'triangle',oct:12,dens:.6, bass:'half',  dr:'tropical',pad:0,seed:43,v:1},
+    juegos:  {bpm:116,key:65,sc:MAJ,prog:[0,5,3,4],lead:'square',  oct:12,dens:.6, bass:'eighth',dr:'pop',     pad:0,seed:47,v:.7}
+  };
+  let ctx=null,out=null,noise=null,cur=null,wanted=null,st=null,tm=null,step=0,nt=0,mel=null,fileEl=null,fileOn=false;const noFile={};
+  const api={hold:()=>false,styles:Object.keys(ST)};
+  const rng=seed=>()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};
+  function init(){if(ctx)return ctx;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();}catch(e){return null;}ctx=AC;
+    out=ctx.createGain();out.gain.value=0;out.connect(ctx.destination);
+    noise=ctx.createBuffer(1,ctx.sampleRate,ctx.sampleRate);const a=noise.getChannelData(0);for(let i=0;i<a.length;i++)a[i]=Math.random()*2-1;return ctx;}
+  const midi=(d)=>st.key+12*Math.floor(d/7)+st.sc[((d%7)+7)%7];
+  const hz=m=>440*Math.pow(2,(m-69)/12);
+  function genMel(s){const r=rng(s.seed);const m=[];const pool=[0,2,4,0,2,4,1,3,5,7,-1];
+    for(let i=0;i<16;i++){m.push(i%4===0||r()<s.dens?pool[Math.floor(r()*pool.length)]:null);}
+    const b=m.slice(0,8).concat(m.slice(8).map(x=>x==null?null:x+(r()<.5?1:-1)));return m.concat(b);}
+  function note(f,t,dur,type,g,lp){const o=ctx.createOscillator(),e=ctx.createGain();o.type=type;o.frequency.value=f;
+    e.gain.setValueAtTime(.0001,t);e.gain.exponentialRampToValueAtTime(g,t+.015);e.gain.exponentialRampToValueAtTime(.0001,t+dur);
+    if(lp){const fl=ctx.createBiquadFilter();fl.type='lowpass';fl.frequency.value=lp;o.connect(fl);fl.connect(e);}else o.connect(e);
+    e.connect(out);o.start(t);o.stop(t+dur+.05);}
+  function nz(t,dur,type,freq,g){const s=ctx.createBufferSource(),f=ctx.createBiquadFilter(),e=ctx.createGain();s.buffer=noise;f.type=type;f.frequency.value=freq;
+    e.gain.setValueAtTime(g,t);e.gain.exponentialRampToValueAtTime(.0001,t+dur);s.connect(f);f.connect(e);e.connect(out);s.start(t);s.stop(t+dur+.02);}
+  function kick(t,g){const o=ctx.createOscillator(),e=ctx.createGain();o.frequency.setValueAtTime(150,t);o.frequency.exponentialRampToValueAtTime(45,t+.12);
+    e.gain.setValueAtTime(g,t);e.gain.exponentialRampToValueAtTime(.0001,t+.18);o.connect(e);e.connect(out);o.start(t);o.stop(t+.2);}
+  function sched(s,t){const sp=60/st.bpm/4,bar=Math.floor(s/16),b=s%16,c=st.prog[bar%st.prog.length];
+    if(st.pad&&b===0)[0,2,4].forEach(k=>note(hz(midi(c+k)-12),t,sp*16,'sine',.03));
+    const bm=d=>hz(midi(c+d)-24);
+    if(st.bass==='half'&&b%8===0)note(bm(0),t,sp*7,'triangle',.13);
+    if(st.bass==='eighth'&&b%2===0)note(bm(0),t,sp*1.8,'triangle',.11);
+    if(st.bass==='octave'&&b%2===0)note(bm(0)*(b%4?2:1),t,sp*1.6,'triangle',.12);
+    if(st.bass==='walk'&&b%4===0)note(bm([0,2,4,5][b/4]),t,sp*3.6,'triangle',.12);
+    if(st.bass==='oom'&&b%4===0)b%8===0?note(bm(0),t,sp*2,'triangle',.13):[2,4].forEach(k=>note(hz(midi(c+k)-12),t,sp*1.5,'triangle',.04));
+    if(st.arp){if(st.bpm<100||b%2===0){const k=[0,2,4,7,4,2][Math.floor(st.bpm<100?s:s/2)%6];note(hz(midi(c+k)+st.oct-12),t,sp*1.8,st.lead,.045,st.lp);}}
+    else if(b%2===0){const i=(s/2)%32,m=mel[i];if(m!=null){let dur=1;while(dur<4&&mel[(i+dur)%32]==null)dur++;note(hz(midi(c+m)+st.oct-12),t,sp*2*dur*.9,st.lead,st.lead==='square'||st.lead==='sawtooth'?.035:.07,st.lp);}}
+    const d=st.dr;
+    if(d==='soft'){if(b%4===2)nz(t,.03,'highpass',8000,.025);if(b===0)kick(t,.18);}
+    if(d==='pop'){if(b%8===0)kick(t,.3);if(b%8===4)nz(t,.12,'bandpass',1800,.09);if(b%2===0)nz(t,.03,'highpass',8000,.03);}
+    if(d==='kart'){if(b%4===0)kick(t,.32);if(b%8===4)nz(t,.12,'bandpass',1800,.1);nz(t,.02,'highpass',9000,.025);}
+    if(d==='disco'){if(b%4===0)kick(t,.34);if(b%4===2)nz(t,.09,'highpass',7000,.05);if(b%8===4)nz(t,.14,'bandpass',1500,.08);}
+    if(d==='tropical'){if(b%8===0)kick(t,.25);if([3,6,10,14].includes(b))note(1800,t,.04,'square',.02);}
+  }
+  function target(){if(!S.cfg.music||!cur)return 0;let v=.55*S.cfg.musicVol*(fileOn?1.6:st.v);if(api.hold())return 0;
+    const talking=(typeof player!=='undefined'&&!player.paused&&!player.ended)||('speechSynthesis' in window&&speechSynthesis.speaking);return talking?v*.35:v;}
+  function tick(){if(!ctx)return;const now=ctx.currentTime;out.gain.setTargetAtTime(target(),now,.25);
+    if(fileOn||!cur)return;if(nt<now-.2)nt=now+.05;
+    const held=api.hold();while(nt<now+.15){if(!held)sched(step,nt);nt+=60/st.bpm/4;step=(step+1)%64;}}
+  function tryFile(name){if(noFile[name])return;
+    try{if(!fileEl){fileEl=new Audio();fileEl.loop=true;fileEl.setAttribute('playsinline','');const src=ctx.createMediaElementSource(fileEl);src.connect(out);}}catch(e){noFile[name]=1;return;}
+    fileEl.onerror=()=>{noFile[name]=1;if(cur===name)fileOn=false;};
+    fileEl.onplaying=()=>{if(cur===name)fileOn=true;};
+    fileEl.src='musica/'+name+'.m4a';const p=fileEl.play();if(p&&p.catch)p.catch(()=>{});}
+  function start(name){if(!init())return;if(cur===name&&tm)return;cur=name;st=ST[name]||ST.menu;mel=genMel(st);step=0;nt=ctx.currentTime+.1;fileOn=false;
+    if(fileEl){try{fileEl.pause();}catch(e){}}tryFile(name);if(!tm)tm=setInterval(tick,50);}
+  function halt(){cur=null;fileOn=false;if(fileEl)try{fileEl.pause();}catch(e){}if(ctx)out.gain.setTargetAtTime(0,ctx.currentTime,.15);
+    if(tm){const t0=tm;setTimeout(()=>{if(tm===t0&&!cur){clearInterval(tm);tm=null;}},600);}}
+  api.play=name=>{wanted=name;if(!S.cfg.music){halt();return;}start(name);};
+  api.stop=()=>{wanted=null;halt();};
+  api.current=()=>wanted;
+  api.refresh=()=>{if(!S.cfg.music)halt();else if(wanted){cur=null;start(wanted);}};
+  api.preview=name=>{wanted=name;cur=null;if(S.cfg.music)start(name);};
+  document.addEventListener('pointerdown',()=>{if(ctx&&ctx.state==='suspended')ctx.resume();if(cur&&fileEl&&!fileOn&&!noFile[cur]&&fileEl.paused){const p=fileEl.play();if(p&&p.catch)p.catch(()=>{});}},true);
+  document.addEventListener('visibilitychange',()=>{if(!ctx)return;if(document.visibilityState==='hidden'){ctx.suspend();if(fileEl)try{fileEl.pause()}catch(e){}}else{ctx.resume();if(cur&&fileOn&&fileEl)fileEl.play().catch(()=>{});}});
+  return api;
+})();
+
+/* ============ TIEMPO DE JUEGO AL DÍA ============ */
+let restShown=false;
+function showRest(){restShown=true;try{stopSpeech();}catch(e){}const mw=MUSIC.current();MUSIC.stop();const d0=dayRec();
+  const d=document.createElement('div');d.id='rest';
+  d.innerHTML='<div class="restBox"><div style="font-size:90px">😴</div><h2>¡Hora de descansar, Claudia!</h2><p>Hoy has jugado '+Math.round(d0.secs/60)+' minutos. ¡Lo has hecho genial! Mañana seguimos.</p><button class="btn" data-x="more">🔓 Adulto: 10 minutos más</button></div>';
+  document.body.appendChild(d);setTimeout(()=>say('¡Hora de descansar, Claudia!|¡Lo has hecho genial!'),300);
+  d.onclick=e=>{if(e.target.closest('[data-x]'))askPin('🔓 Código de adulto',()=>{const r=dayRec();r.extra=(r.extra||0)+600;saveLog();d.remove();restShown=false;if(mw)MUSIC.play(mw);});};}
+setInterval(()=>{const lim=S.cfg.limit;if(!lim||restShown||document.visibilityState!=='visible')return;const r=dayRec();if(r.secs>=lim*60+(r.extra||0))showRest();},5000);
+
 
 /* ---- repaso inteligente: lo que más falla sale más ---- */
 function smartGen(k,p,m){const miss=LOG.miss[k];let q=GEN[k](p,m);
@@ -657,7 +779,7 @@ const WSEC=[
 const WK='claudia_escribir';let WR=(()=>{try{return JSON.parse(localStorage.getItem(WK))||{}}catch(e){return{}}})();
 const saveWR=()=>{try{localStorage.setItem(WK,JSON.stringify(WR))}catch(e){}};
 const wDone=id=>(WR[id]||0);
-const wOpen=sec=>!sec.need||wDone(sec.need[0])>=sec.need[1];
+const wOpen=sec=>{const o=S.cfg.wsec[sec.id];if(o==='closed')return false;if(o==='open')return true;return !sec.need||wDone(sec.need[0])>=sec.need[1];};
 function wSpeak(sec,item){return sec.upper||item.length===1?letterName(sec.upper?item:item.toUpperCase()):item;}
 /* un reto de escritura para el Mundo 3D: algo que ya ha practicado */
 function traceChallenge(){const open=WSEC.filter(s=>wOpen(s)&&s.mode==='guia');const sec=pick(open.slice(-3));const n=Math.max(1,Math.min(sec.items.length,wDone(sec.id)+1));return{sec,item:sec.items[rand(0,n-1)]};}
@@ -672,22 +794,23 @@ function buddy(show,jump){const b=$('#buddy');b.textContent=buddyEmoji();b.class
 
 function showThemes(){
   stopAll();buddy(false);
-  app.innerHTML=(S.theme?'<div class="topbar"><button class="backBtn" data-a="map">⬅️ Atrás</button></div>':'')+'<h1 class="pickTitle">¿Con quién juegas hoy?</h1><p class="pickSub">Toca tu aventura</p><div class="themes">'+
+  app.innerHTML='<div class="topbar">'+(S.theme?'<button class="backBtn" data-a="map">⬅️ Atrás</button>':'')+'<div style="flex:1"></div><button class="iconBtn gearBtn" data-a="settings" aria-label="Ajustes">⚙️</button></div>'+'<h1 class="pickTitle">¿Con quién juegas hoy?</h1><p class="pickSub">Toca tu aventura</p><div class="themes">'+
     Object.entries(THEMES).map(([k,t])=>'<button class="themeCard tc-'+k+'" data-a="pickTheme" data-v="'+k+'">'+buddyHTML(k)+t.name+'<small>'+t.sub+'</small></button>').join('')+
     '<button class="themeCard tc-juegos" data-a="games"><span class="e">🎮</span>Juegos<small>Parejas y más juegos</small></button>'+
     '<button class="themeCard tc-write" data-a="write"><span class="e">✍️</span>Escribir<small>Letras ligadas, mayúsculas y palabras</small></button>'+
     '<button class="themeCard tc-3d" data-a="go3d"><span class="e">🌍</span>Mundo 3D<small>Islas, Gato con botas, Stranger y el Crucero 🚢</small></button></div>';
+  MUSIC.play('menu');
 }
 
 function showMap(){
   stopAll();buddy(false);
   const total=Object.values(S.stars).reduce((a,b)=>a+b,0);
-  let h='<div class="mapHead"><button class="backBtn" data-a="themes">⬅️ Atrás</button><div class="buddyHead">'+(BUDDY_IMG[S.theme]?buddyHTML():'<span class="e">'+buddyEmoji()+'</span>')+T().buddy+'</div><div class="pill">⭐ '+total+'</div><div class="pill coinPill">🪙 <span class="coinCount">'+BOLSA.coins+'</span></div><button class="iconBtn" id="gear">⚙️</button></div>';
+  let h='<div class="mapHead"><button class="backBtn" data-a="themes">⬅️ Atrás</button><div class="buddyHead">'+(BUDDY_IMG[S.theme]?buddyHTML():'<span class="e">'+buddyEmoji()+'</span>')+T().buddy+'</div><div class="pill">⭐ '+total+'</div><div class="pill coinPill">🪙 <span class="coinCount">'+BOLSA.coins+'</span></div><button class="iconBtn gearBtn" id="gear" data-a="settings" aria-label="Ajustes">⚙️</button></div>';
   WORLDS.forEach((w,wi)=>{const open=worldOpen(wi);
     h+='<section class="world'+(open?'':' locked')+'"><h2>'+(open?'🗺️':'🔒')+' '+(wi+1)+'. '+T().worlds[wi]+'</h2><div class="lvls">'+
       w.map(l=>{const st=S.stars[l.id]||0;return '<button class="lvl'+(st?' done':'')+'" data-a="play" data-v="'+l.id+'"'+(open?'':' disabled')+'><span class="e">'+UICON[l.u]+'</span>'+l.t+'<span class="st">'+(st?'⭐'.repeat(st):'')+'</span></button>';}).join('')+'</div></section>';});
   app.innerHTML=h+tabbar('map');
-  holdGear();
+  MUSIC.play({dragon:'aventura',gato:'bosque',retro:'reves'}[S.theme]||'aventura');
   const firstOpen=WORLDS.findIndex((w,wi)=>worldOpen(wi)&&w.some(l=>!S.stars[l.id]));
   if(firstOpen>0){const secs=app.querySelectorAll('.world');secs[firstOpen].scrollIntoView({block:'start'});}
 }
@@ -695,6 +818,7 @@ function showMap(){
 function findLevel(id){for(const w of WORLDS)for(const l of w)if(l.id===id)return l;}
 
 function startLevel(id){
+  MUSIC.stop();
   const L=findLevel(id);G={L,i:0,errors:0,miss:false};
   if(L.k==='praxia'||L.k==='modelo'){G.items=L.k==='praxia'?PRAXIAS[L.p]:shuffle(SONIDOS[L.p]).slice(0,8);G.n=G.items.length;showModel();}
   else{G.n=S.rounds;nextQ();}
@@ -758,7 +882,7 @@ async function toggleMirror(){
   catch(e){alert('No se pudo abrir la cámara. Revisa en Ajustes que la app tenga permiso de cámara.');}
 }
 function stopMirror(){if(mirrorStream){mirrorStream.getTracks().forEach(t=>t.stop());mirrorStream=null;}const v=$('#mirror');v.srcObject=null;v.classList.add('hidden');}
-function stopAll(){clearInterval(timerId);stopMirror();stopSpeech();recReset();if(typeof TR!=='undefined'&&TR){TR.destroy();TR=null;}if(typeof GX!=='undefined'&&GX){clearInterval(GX.iv);clearTimeout(GX.to);GX=null;}}
+function stopAll(){MUSIC.stop();clearInterval(timerId);stopMirror();stopSpeech();recReset();if(typeof TR!=='undefined'&&TR){TR.destroy();TR=null;}if(typeof GX!=='undefined'&&GX){clearInterval(GX.iv);clearTimeout(GX.to);GX=null;}}
 
 /* --- Final de nivel --- */
 function finish(){
@@ -785,12 +909,12 @@ function showWrite(){stopAll();G=null;PG=null;buddy(false);window.scrollTo(0,0);
   let h='<div class="topbar"><button class="backBtn" data-a="themes">⬅️ Atrás</button><div style="flex:1"></div><div class="pill coinPill">🪙 <span class="coinCount">'+BOLSA.coins+'</span></div></div><h1 class="pickTitle">✍️ Escribir</h1><p class="pickSub">Con el dedo o con el lápiz del iPad</p><div class="wsecs">';
   WSEC.forEach(sec=>{const open=wOpen(sec),d=Math.min(wDone(sec.id),sec.items.length);
     h+='<button class="wsec'+(open?'':' locked')+'" data-a="wsec" data-v="'+sec.id+'"'+(open?'':' disabled')+'><span class="e">'+(open?sec.e:'🔒')+'</span><b>'+sec.t+'</b><small>'+sec.sub+'</small><span class="wbar"><i style="width:'+Math.round(d/sec.items.length*100)+'%"></i></span><small>'+d+' / '+sec.items.length+'</small></button>';});
-  app.innerHTML=h+'</div>';}
+  app.innerHTML=h+'</div>';MUSIC.play('calma');}
 function showWriteSec(id){stopAll();const sec=WSEC.find(s=>s.id===id);const d=wDone(id);
   let h='<div class="topbar"><button class="backBtn" data-a="write">⬅️ Atrás</button><div style="flex:1"></div></div><h1 class="pickTitle">'+sec.e+' '+sec.t+'</h1><p class="pickSub">'+sec.sub+'</p><div class="witems">';
-  sec.items.forEach((it,i)=>{const ok=i<d,open=i<=d;const lbl=sec.upper?'<span class="up">'+it+'</span>':cur(it);
+  sec.items.forEach((it,i)=>{const ok=i<d,open=S.cfg.wAll||i<=d;const lbl=sec.upper?'<span class="up">'+it+'</span>':cur(it);
     h+='<button class="witem'+(ok?' done':'')+'" data-a="wgo" data-v="'+id+':'+i+'"'+(open?'':' disabled')+'>'+(open?lbl:'🔒')+(ok?'<i>⭐</i>':'')+'</button>';});
-  app.innerHTML=h+'</div>';}
+  app.innerHTML=h+'</div>';MUSIC.play('calma');}
 function startWrite(v){stopAll();const [id,i0]=v.split(':'),i=+i0,sec=WSEC.find(s=>s.id===id),it=sec.items[i];
   const pic0=(!sec.upper&&it.length>2)?(WORDS.faciles.concat(WORDS.dificiles).find(w=>w[0]===it.replace('á','a'))||SONIDOS.palabras.map(x=>[x.b,x.e]).find(w=>w[0]===it)||[0,''])[1]:'';
   app.innerHTML='<div class="topbar"><button class="backBtn" data-a="wsec" data-v="'+id+'">⬅️ Atrás</button><div style="flex:1"></div><button class="iconBtn" data-a="wsay">🔊</button></div>'+
@@ -804,22 +928,10 @@ function startWrite(v){stopAll();const [id,i0]=v.split(':'),i=+i0,sec=WSEC.find(
   setTimeout(()=>say(sec.mode==='libre'?'Escribe|'+wSpeak(sec,it):'Sigue el trazo|'+wSpeak(sec,it)),300);}
 
 /* ============ JUEGOS ============ */
-const GAMES_PIN='1234';let gamesOk=false;
+let gamesOk=false;
 function askGames(next){
-  next=next||showGames;if(gamesOk)return next();
-  let code='';const d=document.createElement('div');d.id='pin';
-  const draw=()=>{d.querySelector('.pinDots').innerHTML=[0,1,2,3].map(i=>'<i class="'+(i<code.length?'f':'')+'"></i>').join('');};
-  d.innerHTML='<div class="pinBox"><h3>🔒 Código de Juegos</h3><div class="pinDots"></div><div class="pinKeys">'+
-    ['1','2','3','4','5','6','7','8','9','✕','0','⌫'].map(k=>'<button data-k="'+k+'">'+k+'</button>').join('')+'</div></div>';
-  document.body.appendChild(d);draw();
-  d.onclick=e=>{const b=e.target.closest('[data-k]');if(!b){if(e.target===d)d.remove();return;}const k=b.dataset.k;sfx.tap();
-    if(k==='✕'){d.remove();return;}
-    if(k==='⌫'){code=code.slice(0,-1);draw();return;}
-    if(code.length<4){code+=k;draw();}
-    if(code.length===4){
-      if(code===GAMES_PIN){gamesOk=true;setTimeout(()=>{d.remove();next();},150);}
-      else{sfx.no();const dots=d.querySelector('.pinDots');dots.classList.add('err');setTimeout(()=>{code='';dots.classList.remove('err');draw();},450);}
-    }};
+  next=next||showGames;if(gamesOk||!S.cfg.pinGames)return next();
+  askPin('🔒 Código de Juegos',()=>{gamesOk=true;next();});
 }
 const tabbar=on=>'<div class="tabbar"><button class="tab'+(on==='map'?' on':'')+'" data-a="map">🗺️ Aventura</button><button class="tab'+(on==='games'?' on':'')+'" data-a="games">🎮 Juegos</button></div>';
 const LSHORT=L=>LNAME[L].split(',')[0];
@@ -857,7 +969,7 @@ function showGames(){
   h+='<button class="themeCard tc-write" style="width:100%;min-height:110px;flex-direction:row;gap:18px;font-size:26px;margin-bottom:6px" data-a="write"><span class="e">✍️</span><span>Escribir letras<br><small>Sigue el trazo y escribe tú</small></span></button>';
   h+=gameMenuHTML();
   h+='<div class="gameHead">📒 Mis pegatinas</div><button class="themeCard tc-juegos" style="width:100%;min-height:110px;flex-direction:row;gap:18px;font-size:26px" data-a="album"><span class="e">📒</span><span>Álbum de pegatinas<br><small>'+BOLSA.stickers.length+' de '+STICKERS.length+'</small></span></button>';
-  app.innerHTML=h+tabbar('games');
+  app.innerHTML=h+tabbar('games');MUSIC.play('juegos');
 }
 function startPairs(id){
   stopAll();const m=PAIR_MODES.find(x=>x.id===id);
@@ -1028,37 +1140,83 @@ function shopPay(b){const g=GX;const s=g.tray.reduce((a,b)=>a+b,0);
   else{gxMiss(b);logAnswer('La tienda',null,null,false);say(s<g.price?'Te falta dinero':'Te sobra dinero');}}
 function gxReplay(){const g=GX;if(!g)return;if(g.id==='globos'||g.id==='topo')say('Busca|'+g.target.s);else if(g.id==='silabas')say(g.word[0]);else if(g.id==='tienda')say(g.item[1]+' cuesta|'+g.price+'|euros');else if(g.id==='simon'&&!g.lock)simonRound();}
 
-/* --- Zona de adultos (mantener pulsado ⚙️ 2 segundos) --- */
-function holdGear(){
-  const g=$('#gear');if(!g)return;let t;
-  const start=e=>{e.preventDefault();g.style.background='rgba(255,255,255,.5)';t=setTimeout(showAdult,2000);};
-  const end=()=>{clearTimeout(t);g.style.background='';};
-  g.addEventListener('pointerdown',start);['pointerup','pointerleave','pointercancel'].forEach(ev=>g.addEventListener(ev,end));
-}
-function showAdult(){
-  const d=document.createElement('div');d.id='adult';
-  d.innerHTML='<div class="panel"><h3>⚙️ Zona de papá y mamá</h3>'+
-    '<label>Velocidad de la voz: <span id="rv">'+S.rate.toFixed(2)+'</span></label><input type="range" min="0.6" max="1.1" step="0.05" value="'+S.rate+'" id="rate">'+
-    '<label>Preguntas por nivel</label><div>'+[4,6,8,10].map(n=>'<button class="btn'+(S.rounds===n?' acc':'')+'" data-ad="rounds" data-v="'+n+'">'+n+'</button>').join('')+'</div>'+
-    '<label>Informe</label><button class="btn acc" data-ad="report">📊 Ver informe de Claudia</button>'+
-    '<label>Progreso</label><button class="btn" data-ad="all">'+(S.all?'🔒 Volver a bloquear mundos':'🔓 Abrir todos los mundos')+'</button><button class="btn" data-ad="reset">🗑️ Borrar progreso</button>'+
-    '<p>En los ejercicios de boca y sonidos, el adulto decide cuándo pulsar «¡Lo hice!». El botón 🪞 abre la cámara frontal como espejo para que Claudia se vea.</p>'+
+/* --- Ajustes (botón ⚙️ + código de adulto) --- */
+function holdGear(){}
+function openSettings(){const back=$('.mapHead')?showMap:$('.wsecs')?showWrite:showThemes;askPin('⚙️ Ajustes',()=>showAdult(back),{sub:'Solo para papá y mamá'});}
+function showAdult(back){
+  back=back||showThemes;let d=$('#adult');if(!d){d=document.createElement('div');d.id='adult';document.body.appendChild(d);}
+  const keepScroll=d.querySelector('.panel')?d.querySelector('.panel').scrollTop:0;const C=S.cfg;
+  const seg=(key,opts,val)=>'<div class="seg">'+opts.map(([v,t])=>'<button class="'+(String(val)===String(v)?'on':'')+'" data-s="'+key+'" data-v="'+v+'">'+t+'</button>').join('')+'</div>';
+  const yn=(key,val)=>seg(key,[[1,'Sí'],[0,'No']],val?1:0);
+  const row=(t,ctrl,sub)=>'<div class="srow"><div><b>'+t+'</b>'+(sub?'<small>'+sub+'</small>':'')+'</div>'+ctrl+'</div>';
+  const lock3=[['auto','Auto'],['open','🔓'],['closed','🔒']];
+  const mins=Math.round(dayRec().secs/60);
+  d.innerHTML='<div class="panel settings"><h3>⚙️ Ajustes</h3>'+
+    '<h4>🔒 Código y acceso</h4>'+
+    row('Pedir código para Juegos y Mundo 3D',yn('pinGames',C.pinGames),'Así no se abren en el cole')+
+    row('Código actual: <span class="code">'+C.pin+'</span>','<button class="btn" data-ad="pin">🔢 Cambiar</button>','Sirve para Juegos, Mundo 3D y Ajustes')+
+    '<h4>🎵 Música y sonido</h4>'+
+    row('Música de fondo',yn('music',C.music),'Cambia según el sitio y se para en los ejercicios')+
+    '<label>Volumen de la música</label><input type="range" min="0.1" max="1" step="0.05" value="'+C.musicVol+'" id="mvol">'+
+    '<div class="mprev">'+[['menu','🏠'],['aventura','🐉'],['bosque','🌲'],['reves','🔦'],['kart','🏎️'],['atrio','🚢'],['disco','🪩'],['tropical','🏝️'],['calma','🛏️']].map(([k,e])=>'<button data-ad="mprev" data-v="'+k+'">'+e+'</button>').join('')+'</div>'+
+    row('Efectos de sonido',yn('sfx',C.sfx),'Pitidos de acierto, fallo y botones')+
+    '<label>Velocidad de la voz del iPad: <span id="rv">'+S.rate.toFixed(2)+'</span></label><input type="range" min="0.6" max="1.1" step="0.05" value="'+S.rate+'" id="rate">'+
+    '<h4>🗺️ Mundos de Aventura</h4><p>Auto: se abre al terminar el mundo anterior. 🔓 abierto siempre. 🔒 cerrado.</p>'+
+    WORLDS.map((w,wi)=>row((wi+1)+'. '+T().worlds[wi],seg('wopen:'+wi,lock3,C.wopen[wi]||'auto'),(worldOpen(wi)?'Ahora abierto':'Ahora cerrado')+' · '+w.filter(l=>S.stars[l.id]).length+'/'+w.length+' niveles')).join('')+
+    '<div><button class="btn" data-ad="wall">🔓 Abrir todos</button><button class="btn" data-ad="wauto">↺ Todos en Auto</button></div>'+
+    row('Preguntas por nivel',seg('rounds',[[4,4],[6,6],[8,8],[10,10]],S.rounds))+
+    '<h4>✍️ Escribir</h4>'+
+    WSEC.map(sec=>row(sec.e+' '+sec.t+(sec.mode==='libre'?' (libre)':''),seg('wsec:'+sec.id,lock3,C.wsec[sec.id]||'auto'),(wOpen(sec)?'Ahora abierto':'Ahora cerrado')+' · '+Math.min(wDone(sec.id),sec.items.length)+'/'+sec.items.length)).join('')+
+    row('Letras y palabras de cada apartado',seg('wAll',[[0,'En orden'],[1,'Todas abiertas']],C.wAll?1:0),'«Todas abiertas» deja elegir cualquier letra')+
+    '<h4>🌍 Mundo 3D</h4>'+
+    row('Nivel de los retos',seg('w3d',[[-1,'Auto']].concat(WORLDS.map((w,i)=>[i,i+1])),C.w3d),'Auto: suben poco a poco. Un número: retos del mundo de Aventura con ese número')+
+    '<h4>⏱️ Tiempo de juego al día</h4>'+
+    row('Hoy lleva '+mins+' min',seg('limit',[[0,'Sin límite'],[15,15],[20,20],[30,30],[45,45],[60,60]],C.limit),'Al llegar al límite sale «¡Hora de descansar!»; con el código se añaden 10 min')+
+    '<h4>📊 Informe y copias</h4>'+
+    '<button class="btn acc" data-ad="report">📊 Ver informe de Claudia</button>'+
+    '<button class="btn" data-ad="backup">💾 Guardar copia</button><button class="btn" data-ad="restore">📂 Restaurar copia</button><input type="file" id="restoreF" accept=".json,application/json" style="display:none">'+
+    '<p>La copia guarda estrellas, monedas, pegatinas, progreso del 3D y de Escribir. Guárdala de vez en cuando por si se borra Safari.</p>'+
+    '<h4>🗑️ Borrar</h4><button class="btn" data-ad="reset">🗑️ Borrar estrellas de Aventura</button>'+
+    '<p>En los ejercicios de boca y sonidos, el adulto decide cuándo pulsar «¡Lo hice!». El botón 🪞 abre la cámara frontal como espejo.</p>'+
     '<button class="btn acc" data-ad="close" style="width:100%;margin-top:10px">Cerrar</button></div>';
-  document.body.appendChild(d);
+  d.querySelector('.panel').scrollTop=keepScroll;
+  const redraw=()=>{save();showAdult(back);};
   $('#rate').oninput=e=>{S.rate=+e.target.value;$('#rv').textContent=S.rate.toFixed(2);save();};
   $('#rate').onchange=()=>say('Así hablo ahora');
-  d.onclick=e=>{const b=e.target.closest('[data-ad]');if(!b)return;const a=b.dataset.ad;
-    if(a==='rounds'){S.rounds=+b.dataset.v;save();d.remove();showAdult();}
-    if(a==='all'){S.all=!S.all;save();d.remove();showMap();}
-    if(a==='reset'&&confirm('¿Borrar todas las estrellas?')){S.stars={};S.all=false;save();d.remove();showMap();}
+  $('#mvol').oninput=e=>{C.musicVol=+e.target.value;save();};
+  $('#restoreF').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const o=JSON.parse(r.result);if(!o||!o.claudia_aventuras_v1)throw 0;
+      if(!confirm('¿Cargar la copia del '+(o._fecha||'?')+'? Se sustituye el progreso actual.'))return;
+      Object.keys(o).forEach(k=>{if(/^claudia_/.test(k))localStorage.setItem(k,o[k]);});alert('✅ Copia restaurada');location.reload();}catch(err){alert('Ese archivo no es una copia de la app');}};r.readAsText(f);};
+  d.onclick=e=>{const sb=e.target.closest('[data-s]');
+    if(sb){const k=sb.dataset.s,v=sb.dataset.v;sfx.tap();
+      if(k==='pinGames'){C.pinGames=v==='1';gamesOk=false;}
+      else if(k==='music'){C.music=v==='1';save();if(C.music)MUSIC.preview('menu');else MUSIC.refresh();}
+      else if(k==='sfx')C.sfx=v==='1';
+      else if(k==='rounds')S.rounds=+v;
+      else if(k==='wAll')C.wAll=v==='1';
+      else if(k==='w3d')C.w3d=+v;
+      else if(k==='limit'){C.limit=+v;restShown=false;}
+      else if(k.startsWith('wopen:')){const i=k.split(':')[1];if(v==='auto')delete C.wopen[i];else C.wopen[i]=v;}
+      else if(k.startsWith('wsec:')){const i=k.split(':')[1];if(v==='auto')delete C.wsec[i];else C.wsec[i]=v;}
+      redraw();return;}
+    const b=e.target.closest('[data-ad]');if(!b)return;const a=b.dataset.ad;
+    if(a==='pin')askPin('🔢 Nuevo código',c1=>askPin('Repite el código',c2=>{if(c1===c2){C.pin=c1;save();toastMsg('✅ Código cambiado');}else toastMsg('❌ No coinciden, prueba otra vez');showAdult(back);},{raw:true}),{raw:true,sub:'Escribe 4 números'});
+    if(a==='mprev'){if(!C.music){C.music=true;save();}MUSIC.preview(b.dataset.v);}
+    if(a==='wall'){WORLDS.forEach((w,i)=>C.wopen[i]='open');redraw();}
+    if(a==='wauto'){C.wopen={};S.all=false;redraw();}
     if(a==='report'){d.remove();showReport();}
-    if(a==='close'){d.remove();showMap();}};
+    if(a==='backup'){const o={_fecha:today()};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(/^claudia_/.test(k))o[k]=localStorage.getItem(k);}
+      const blob=new Blob([JSON.stringify(o)],{type:'application/json'});const u=URL.createObjectURL(blob);const l=document.createElement('a');l.href=u;l.download='copia-claudia-'+today()+'.json';document.body.appendChild(l);l.click();setTimeout(()=>{l.remove();URL.revokeObjectURL(u);},1000);toastMsg('💾 Copia guardada en Descargas / Archivos');}
+    if(a==='restore')$('#restoreF').click();
+    if(a==='reset'&&confirm('¿Borrar todas las estrellas de Aventura?')){S.stars={};S.all=false;redraw();}
+    if(a==='close'){d.remove();back();}};
 }
 
 /* --- Eventos --- */
 app.addEventListener('click',e=>{
   const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a;
   if(!['opt','replay','card','simon','balloon','mole','block','money','pay'].includes(a))sfx.tap();
+  if(a==='settings'){openSettings();return;}
   if(a==='pickTheme'){setTheme(b.dataset.v);say(T().intro);showMap();}
   else if(a==='themes'){gamesOk=false;showThemes();}
   else if(a==='play')startLevel(b.dataset.v);
@@ -1089,7 +1247,7 @@ app.addEventListener('click',e=>{
   else if(a==='unpay'){GX.tray.splice(+b.dataset.i,1);shopDraw();}
   else if(a==='shopclr'){GX.tray=[];shopDraw();}
   else if(a==='pay')shopPay(b);
-  else if(a==='album'){stopAll();app.innerHTML='<div class="topbar"><button class="backBtn" data-a="games">⬅️ Atrás</button><div style="flex:1"></div></div><h1 class="pickTitle">📒 Mis pegatinas</h1><p class="pickSub">'+BOLSA.stickers.length+' de '+STICKERS.length+' · Gana más terminando niveles y juegos</p><div class="albumWrap">'+albumHTML()+'</div>';}
+  else if(a==='album'){stopAll();app.innerHTML='<div class="topbar"><button class="backBtn" data-a="games">⬅️ Atrás</button><div style="flex:1"></div></div><h1 class="pickTitle">📒 Mis pegatinas</h1><p class="pickSub">'+BOLSA.stickers.length+' de '+STICKERS.length+' · Gana más terminando niveles y juegos</p><div class="albumWrap">'+albumHTML()+'</div>';MUSIC.play('juegos');}
 });
 
 /* ============ PWA: icono y manifest generados ============ */
