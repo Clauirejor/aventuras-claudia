@@ -298,27 +298,37 @@ const AUDIO_DIR='audio/',AUDIO_EXT='.m4a';
 const slug=t=>String(t).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
 const missing=new Set();const player=new Audio();player.preload='auto';player.setAttribute('playsinline','');
 let sayToken=0;
-function stopSpeech(){sayToken++;try{player.pause();}catch(e){}if('speechSynthesis' in window)speechSynthesis.cancel();}
+let sayBusy=false;
+function stopSpeech(){sayToken++;sayBusy=false;try{player.pause();}catch(e){}if('speechSynthesis' in window)speechSynthesis.cancel();}
 const FK='claudia_faltan';function noteMissing(s,p){try{const f=JSON.parse(localStorage.getItem(FK)||'{}');if(!f[s]){f[s]=p;localStorage.setItem(FK,JSON.stringify(f));}}catch(e){}}
+let fpId=0;
 function filePart(s,ph){return new Promise(res=>{
   if(missing.has(s))return res(false);
-  let done=false,to;const fin=(ok,mark)=>{if(done)return;done=true;clearTimeout(to);player.onended=player.onerror=null;if(mark){missing.add(s);noteMissing(s,ph||s);}res(ok);};
-  player.onended=()=>fin(true);player.onerror=()=>fin(false,true);
-  player.src=AUDIO_DIR+s+AUDIO_EXT;const p=player.play();if(p&&p.catch)p.catch(err=>fin(false,err&&err.name!=='NotAllowedError'&&err.name!=='AbortError'));
+  const id=++fpId;let done=false,to,st;
+  const off=()=>{player.removeEventListener('ended',onEnd);player.removeEventListener('error',onErr);};
+  const fin=(ok,mark)=>{if(done)return;done=true;clearTimeout(to);clearTimeout(st);off();if(mark){missing.add(s);noteMissing(s,ph||s);}res(ok);};
+  const onEnd=()=>{if(id===fpId)fin(true);};
+  const onErr=()=>{if(id===fpId)fin(false,true);};
+  player.addEventListener('ended',onEnd);player.addEventListener('error',onErr);
+  player.src=AUDIO_DIR+s+AUDIO_EXT;const p=player.play();
+  if(p&&p.catch)p.catch(err=>{if(id!==fpId)return fin(false);fin(false,!!err&&err.name==='NotSupportedError');});
+  st=setTimeout(()=>{if(id===fpId&&player.paused&&!player.ended&&player.currentTime===0)fin(false);},4000);
   to=setTimeout(()=>fin(true),15000);});}
 function ttsPart(t,rate){return new Promise(res=>{
   if(!('speechSynthesis' in window))return res();
   const u=new SpeechSynthesisUtterance(t);u.lang='es-ES';if(voice)u.voice=voice;u.rate=rate||S.rate;u.pitch=1.05;
   let done=false;const fin=()=>{if(!done){done=true;res();}};u.onend=fin;u.onerror=fin;setTimeout(fin,1500+t.length*130);
   setTimeout(()=>speechSynthesis.speak(u),60);});}
+function whenQuiet(fn,min,max){const t0=Date.now();const chk=()=>{const el=Date.now()-t0;if(el>=min&&(!sayBusy||el>(max||8000)))fn();else setTimeout(chk,150);};setTimeout(chk,Math.min(min,150));}
 async function say(t,rate){
-  if(!t)return;stopSpeech();const my=sayToken;
+  if(!t)return;stopSpeech();const my=sayToken;sayBusy=true;
   const parts=String(t).split('|').map(x=>x.trim()).filter(Boolean);
   for(const p of parts){
     if(my!==sayToken)return;const s=slug(p);if(!s)continue;
     const ok=await filePart(s,p);if(my!==sayToken)return;
     if(!ok)await ttsPart(p,rate);
   }
+  if(my===sayToken)sayBusy=false;
 }
 /* iOS: desbloquear el audio con el primer toque */
 document.addEventListener('pointerdown',function unlock(){
@@ -843,7 +853,7 @@ function answer(btn){
   if(btn.dataset.v===G.q.answer){
     G.locked=true;btn.classList.add('good');sfx.ok();burst(btn);buddy(true,true);logAnswer(G.L.t,G.L.k,G.q.answer,true,!G.qMiss);
     say((G.q.after?G.q.after+'|':'')+pick(T().cheer));
-    G.i++;const g=G;setTimeout(()=>{if(G===g)nextQ();},G.q.after?2300:1500);
+    G.i++;const g=G;whenQuiet(()=>{if(G===g)nextQ();},1000);
   }else{
     if(btn.classList.contains('bad'))return;
     btn.classList.add('bad');G.errors++;G.qMiss=true;logAnswer(G.L.t,G.L.k,G.q.answer,false);sfx.no();say(pick(['Casi. Prueba otra vez.','Mmm, otra vez.','¡Tú puedes! Otra vez.']));
