@@ -418,9 +418,10 @@ const slug=t=>String(t).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').re
 const missing=new Set();const player=new Audio();player.preload='auto';player.setAttribute('playsinline','');
 let sayToken=0;
 function stopSpeech(){sayToken++;try{player.pause();}catch(e){}if('speechSynthesis' in window)speechSynthesis.cancel();}
-function filePart(s){return new Promise(res=>{
+const FK='claudia_faltan';function noteMissing(s,p){try{const f=JSON.parse(localStorage.getItem(FK)||'{}');if(!f[s]){f[s]=p;localStorage.setItem(FK,JSON.stringify(f));}}catch(e){}}
+function filePart(s,ph){return new Promise(res=>{
   if(missing.has(s))return res(false);
-  let done=false,to;const fin=(ok,mark)=>{if(done)return;done=true;clearTimeout(to);player.onended=player.onerror=null;if(mark)missing.add(s);res(ok);};
+  let done=false,to;const fin=(ok,mark)=>{if(done)return;done=true;clearTimeout(to);player.onended=player.onerror=null;if(mark){missing.add(s);noteMissing(s,ph||s);}res(ok);};
   player.onended=()=>fin(true);player.onerror=()=>fin(false,true);
   player.src=AUDIO_DIR+s+AUDIO_EXT;const p=player.play();if(p&&p.catch)p.catch(err=>fin(false,err&&err.name!=='NotAllowedError'&&err.name!=='AbortError'));
   to=setTimeout(()=>fin(true),15000);});}
@@ -434,7 +435,7 @@ async function say(t,rate){
   const parts=String(t).split('|').map(x=>x.trim()).filter(Boolean);
   for(const p of parts){
     if(my!==sayToken)return;const s=slug(p);if(!s)continue;
-    const ok=await filePart(s);if(my!==sayToken)return;
+    const ok=await filePart(s,p);if(my!==sayToken)return;
     if(!ok)await ttsPart(p,rate);
   }
 }

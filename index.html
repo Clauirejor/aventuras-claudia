@@ -283,9 +283,10 @@ const slug=t=>String(t).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').re
 const missing=new Set();const player=new Audio();player.preload='auto';player.setAttribute('playsinline','');
 let sayToken=0;
 function stopSpeech(){sayToken++;try{player.pause();}catch(e){}if('speechSynthesis' in window)speechSynthesis.cancel();}
-function filePart(s){return new Promise(res=>{
+const FK='claudia_faltan';function noteMissing(s,p){try{const f=JSON.parse(localStorage.getItem(FK)||'{}');if(!f[s]){f[s]=p;localStorage.setItem(FK,JSON.stringify(f));}}catch(e){}}
+function filePart(s,ph){return new Promise(res=>{
   if(missing.has(s))return res(false);
-  let done=false,to;const fin=(ok,mark)=>{if(done)return;done=true;clearTimeout(to);player.onended=player.onerror=null;if(mark)missing.add(s);res(ok);};
+  let done=false,to;const fin=(ok,mark)=>{if(done)return;done=true;clearTimeout(to);player.onended=player.onerror=null;if(mark){missing.add(s);noteMissing(s,ph||s);}res(ok);};
   player.onended=()=>fin(true);player.onerror=()=>fin(false,true);
   player.src=AUDIO_DIR+s+AUDIO_EXT;const p=player.play();if(p&&p.catch)p.catch(err=>fin(false,err&&err.name!=='NotAllowedError'&&err.name!=='AbortError'));
   to=setTimeout(()=>fin(true),15000);});}
@@ -299,7 +300,7 @@ async function say(t,rate){
   const parts=String(t).split('|').map(x=>x.trim()).filter(Boolean);
   for(const p of parts){
     if(my!==sayToken)return;const s=slug(p);if(!s)continue;
-    const ok=await filePart(s);if(my!==sayToken)return;
+    const ok=await filePart(s,p);if(my!==sayToken)return;
     if(!ok)await ttsPart(p,rate);
   }
 }
@@ -915,6 +916,7 @@ function showReport(){
     '<h4>Tiempo jugando (últimos 7 días)</h4>'+bars+
     '<h4>Lo que más le cuesta</h4>'+(rows.length?'<table><tr><th>Ejercicio</th><th>Acierto</th><th>Intentos</th></tr>'+rows.map(([t,v])=>'<tr><td>'+t+'</td><td>'+pct(v.ok,v.fail)+'</td><td>'+(v.ok+v.fail)+'</td></tr>').join('')+'</table>':'<p>Todavía no hay datos suficientes.</p>')+
     (miss.length?'<h4>Respuestas que más falla (salen más a menudo)</h4><p style="opacity:1">'+miss.map(m=>'<b>'+m[1]+'</b> <small>('+m[0]+')</small>').join(' · ')+'</p>':'')+
+    (()=>{let f={};try{f=JSON.parse(localStorage.getItem(FK)||'{}')}catch(e){}const k=Object.keys(f).sort();return '<h4>🎙️ Audios que han sonado con la voz del iPad ('+k.length+')</h4>'+(k.length?'<p style="opacity:1;font-size:15px">'+k.map(x=>'<b>'+x+'.m4a</b> «'+f[x]+'»').join('<br>')+'</p><button class="btn" data-r="fcopy">📋 Copiar lista de audios</button><button class="btn" data-r="fclear">🗑️ Vaciar lista</button>':'<p>Todos los audios que ha oído Claudia son tu voz. 👍</p>');})()+
     '<h4>Total desde el principio</h4><p style="opacity:1">'+mins(tot.secs)+' minutos · '+tot.ok+' aciertos · '+tot.fail+' fallos · '+BOLSA.stickers.length+' pegatinas · '+BOLSA.coins+' monedas</p>'+
     '<button class="btn" data-r="copy">📋 Copiar informe (para la logopeda)</button><button class="btn" data-r="clear">🗑️ Borrar informe</button>'+
     '<button class="btn acc" data-r="close" style="width:100%;margin-top:10px">Cerrar</button></div>';
@@ -922,6 +924,8 @@ function showReport(){
   d.onclick=e=>{const b=e.target.closest('[data-r]');if(!b)return;const a=b.dataset.r;
     if(a==='copy'){(navigator.clipboard?navigator.clipboard.writeText(txtRep):Promise.reject()).then(()=>{b.textContent='✅ Copiado';}).catch(()=>{prompt('Copia el informe:',txtRep);});}
     if(a==='clear'&&confirm('¿Borrar todo el informe?')){LOG={days:{},miss:{}};saveLog();d.remove();showReport();}
+    if(a==='fcopy'){let f={};try{f=JSON.parse(localStorage.getItem(FK)||'{}')}catch(e){}const t=Object.keys(f).sort().map(x=>x+'.m4a  →  di: «'+f[x]+'»').join('\n');(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>{b.textContent='✅ Copiado';}).catch(()=>{prompt('Copia la lista:',t);});}
+    if(a==='fclear'&&confirm('¿Vaciar la lista de audios?')){localStorage.removeItem(FK);d.remove();showReport();}
     if(a==='close')d.remove();};
 }
 
