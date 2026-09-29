@@ -247,6 +247,7 @@ img.pic{width:1em;height:1em;object-fit:contain;vertical-align:middle;border-rad
 .seg{display:inline-flex;flex-wrap:wrap;border-radius:14px;overflow:hidden;border:2px solid #e3ded4;background:#f6f3ec;}
 .seg button{padding:8px 11px;font-size:15px;font-weight:700;background:none;color:#555;min-width:38px;}
 .seg button.on{background:#ff8a3d;color:#fff;}
+.seg button.on[data-v=open]{background:#2e9d4f;}.seg button.on[data-v=closed]{background:#d63b3b;}
 .code{font-family:monospace;background:#f1eee8;padding:2px 8px;border-radius:8px;letter-spacing:3px;}
 .mprev{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px;}
 .mprev button{font-size:24px;width:48px;height:44px;border-radius:12px;background:#f1eee8;}
@@ -792,7 +793,12 @@ const wDone=id=>(WR[id]||0);
 const wOpen=sec=>{const o=S.cfg.wsec[sec.id];if(o==='closed')return false;if(o==='open')return true;return !sec.need||wDone(sec.need[0])>=sec.need[1];};
 function wSpeak(sec,item){return sec.upper||item.length===1?letterName(sec.upper?item:item.toUpperCase()):item;}
 /* un reto de escritura para el Mundo 3D: algo que ya ha practicado */
-function traceChallenge(){const open=WSEC.filter(s=>wOpen(s)&&s.mode==='guia');const sec=pick(open.slice(-3));const n=Math.max(1,Math.min(sec.items.length,wDone(sec.id)+1));return{sec,item:sec.items[rand(0,n-1)]};}
+/* reto de trazo para el 3D: va avanzando (a, b, c…) y a veces repasa lo ya hecho */
+function traceChallenge(){const open=WSEC.filter(s=>wOpen(s)&&s.mode==='guia');
+  const pend=open.filter(s=>wDone(s.id)<s.items.length);const sec=pend.length&&Math.random()<.75?(Math.random()<.7?pend[0]:pick(pend)):pick(open.slice(-3));
+  const d=Math.min(wDone(sec.id),sec.items.length);const idx=d<sec.items.length&&(d<3||Math.random()<.8)?d:rand(0,Math.max(0,d-1));
+  return{sec,item:sec.items[idx],idx};}
+function traceAdvance(tc){if(tc&&tc.idx===wDone(tc.sec.id)){WR[tc.sec.id]=tc.idx+1;saveWR();}}
 
 /* ============ Pantallas ============ */
 const app=$('#app');
@@ -1159,7 +1165,7 @@ function showAdult(back){
   const seg=(key,opts,val)=>'<div class="seg">'+opts.map(([v,t])=>'<button class="'+(String(val)===String(v)?'on':'')+'" data-s="'+key+'" data-v="'+v+'">'+t+'</button>').join('')+'</div>';
   const yn=(key,val)=>seg(key,[[1,'Sí'],[0,'No']],val?1:0);
   const row=(t,ctrl,sub)=>'<div class="srow"><div><b>'+t+'</b>'+(sub?'<small>'+sub+'</small>':'')+'</div>'+ctrl+'</div>';
-  const lock3=[['auto','Auto'],['open','🔓'],['closed','🔒']];
+  const lock3=[['auto','Auto'],['open','✅ Abierto'],['closed','⛔ Cerrado']];
   const mins=Math.round(dayRec().secs/60);
   d.innerHTML='<div class="panel settings"><h3>⚙️ Ajustes</h3>'+
     '<h4>🔒 Código y acceso</h4>'+
@@ -1171,9 +1177,9 @@ function showAdult(back){
     '<div class="mprev">'+[['menu','🏠'],['aventura','🐉'],['bosque','🌲'],['reves','🔦'],['kart','🏎️'],['atrio','🚢'],['disco','🪩'],['tropical','🏝️'],['calma','🛏️']].map(([k,e])=>'<button data-ad="mprev" data-v="'+k+'">'+e+'</button>').join('')+'</div>'+
     row('Efectos de sonido',yn('sfx',C.sfx),'Pitidos de acierto, fallo y botones')+
     '<label>Velocidad de la voz del iPad: <span id="rv">'+S.rate.toFixed(2)+'</span></label><input type="range" min="0.6" max="1.1" step="0.05" value="'+S.rate+'" id="rate">'+
-    '<h4>🗺️ Mundos de Aventura</h4><p>Auto: se abre al terminar el mundo anterior. 🔓 abierto siempre. 🔒 cerrado.</p>'+
+    '<h4>🗺️ Mundos de Aventura</h4><p><b>Auto</b>: se abre solo al terminar el anterior. <b>✅ Abierto</b>: Claudia puede entrar ya. <b>⛔ Cerrado</b>: no puede entrar.</p>'+
     WORLDS.map((w,wi)=>row((wi+1)+'. '+T().worlds[wi],seg('wopen:'+wi,lock3,C.wopen[wi]||'auto'),(worldOpen(wi)?'Ahora abierto':'Ahora cerrado')+' · '+w.filter(l=>S.stars[l.id]).length+'/'+w.length+' niveles')).join('')+
-    '<div><button class="btn" data-ad="wall">🔓 Abrir todos</button><button class="btn" data-ad="wauto">↺ Todos en Auto</button></div>'+
+    '<div><button class="btn" data-ad="wall">✅ Abrir todos</button><button class="btn" data-ad="wauto">↺ Todos en Auto</button></div>'+
     row('Preguntas por nivel',seg('rounds',[[4,4],[6,6],[8,8],[10,10]],S.rounds))+
     '<h4>✍️ Escribir</h4>'+
     WSEC.map(sec=>row(sec.e+' '+sec.t+(sec.mode==='libre'?' (libre)':''),seg('wsec:'+sec.id,lock3,C.wsec[sec.id]||'auto'),(wOpen(sec)?'Ahora abierto':'Ahora cerrado')+' · '+Math.min(wDone(sec.id),sec.items.length)+'/'+sec.items.length)).join('')+
